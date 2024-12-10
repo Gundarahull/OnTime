@@ -20,6 +20,16 @@ module.exports.userRegister = async (req, res, next) => {
       email,
       password,
     } = req.body;
+    const isUserExist = await UserModel.findOne({
+      email: email.toLowerCase(),
+    });
+
+    if (isUserExist) {
+      return res.status(409).json({
+        success: false,
+        message: "User already registered with this email.",
+      });
+    }
 
     const hashedPassword = await UserModel.hashPassword(password); //Here there is no instance thats why using direct Model...
     console.log({ firstName, lastName, email, password });

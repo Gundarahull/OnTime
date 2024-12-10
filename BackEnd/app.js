@@ -16,5 +16,6 @@ app.get("/", (req, res) => {
 
 //Config Routes
 app.use("/users", require("./routes/user.routes"));
+app.use("/captain", require("./routes/captain.routes"));
 
 module.exports = app;
