@@ -34,6 +34,17 @@ module.exports.captainRegister = async (req, res) => {
       });
     }
 
+    const isVehicleExist = await CaptainModel.findOne({
+      "vehicle.plate": plate,
+    });
+
+    if (isVehicleExist) {
+      return res.status(409).json({
+        success: false,
+        message: "Vehicle already registered with this Number.",
+      });
+    }
+
     // Hash the password
     const hashedPassword = await CaptainModel.hashPassword(password);
 
@@ -102,7 +113,12 @@ module.exports.captainLogin = async (req, res) => {
 
     const captainData = captain.toObject(); // Convert Mongoose document to plain object
     delete captainData.password; // Remove password field
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      // secure: process.env.NODE_ENV === "production", // Ensures it's sent only over HTTPS in production
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
     return res.status(200).json({
       success: true,
       messsage: "Captain Logged In Succesfully",

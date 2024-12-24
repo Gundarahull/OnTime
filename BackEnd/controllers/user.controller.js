@@ -90,7 +90,13 @@ module.exports.userLogin = async (req, res, next) => {
       });
     }
     const token = user.generateAuthToken();
-    res.cookie("token", token);
+    res.cookie("token", token, {
+      httpOnly: true,
+      // secure: process.env.NODE_ENV === "production", // Ensures it's sent only over HTTPS in production
+      secure:false,
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
     return res.status(200).json({
       success: true,
       message: "User Logined successfully.",

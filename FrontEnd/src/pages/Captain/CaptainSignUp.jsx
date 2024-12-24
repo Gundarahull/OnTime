@@ -1,9 +1,14 @@
-import React, { useState } from "react";
+import axios from "axios";
+import React, { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { CapatainDataContext } from "../context/CaptainContext";
 
 const CaptainSignUp = () => {
-  const [captainData, setCaptainData] = useState(null);
+  const { captain, setCaptain } = useContext(CapatainDataContext);
+  const [apiError, setApiError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -11,11 +16,10 @@ const CaptainSignUp = () => {
     formState: { errors, isSubmitting },
   } = useForm();
 
-  const onSubmit = (data) => {
-    setUserData({
-      email: data.email,
-      password: data.password,
-    });
+  const onSubmit = async (data) => {
+    setApiError(null);
+    setLoading(true);
+
     const signUpData = {
       fullName: {
         firstName: data.firstName,
@@ -23,10 +27,42 @@ const CaptainSignUp = () => {
       },
       email: data.email,
       password: data.password,
+      vehicle: {
+        color: data.color,
+        type: data.type,
+        capacity: data.capacity,
+        plate: data.plate,
+      },
     };
-    setUserData(signUpData);
 
     // Perform API call or authentication logic here
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/captain/register`,
+        signUpData
+      );
+
+      if (response?.status === 201) {
+        const captainData = response.data;
+        setCaptain(captainData);
+        navigate("/captain-login");
+      } else {
+        setApiError("Unexpected error. Please try again.");
+      }
+    } catch (error) {
+
+      const errorMessage =
+        error?.response?.data?.message ||
+        "Something went wrong. Please try again.";
+      setApiError(errorMessage);
+      if (error?.response?.data?.errors) {
+        error.response.data.errors.forEach((err) => {
+          setError(err.field, { type: "manual", message: err.message });
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -172,12 +208,19 @@ const CaptainSignUp = () => {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="flex items-center justify-center mt-4 bg-black text-white font-medium py-2 px-4 rounded-md shadow-md w-full h-12 transition disabled:opacity-50"
+                disabled={loading}
+                className={`flex items-center justify-center mt-4 bg-black text-white font-medium py-2 px-4 rounded-md shadow-md w-full h-12 transition disabled:opacity-50 ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                Sign Up
+                {loading ? "Submitting..." : "Create an Account "}
               </button>
             </form>
+            {apiError && (
+              <p className="text-red-600 text-center mb-4 mt-2 font-bold">
+                {apiError}
+              </p>
+            )}
 
             <p className="text-center text-gray-600 text-sm mt-2">
               Already Captain?{" "}

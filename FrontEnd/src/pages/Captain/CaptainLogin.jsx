@@ -1,9 +1,14 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { CapatainDataContext } from "../context/CaptainContext";
+import axios from "axios";
 
 const CaptainLogin = () => {
-  const [captainData, setCaptainData] = useState(null);
+  const { captain, setCaptain } = useContext(CapatainDataContext);
+  const [apiError, setApiError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -11,13 +16,45 @@ const CaptainLogin = () => {
     formState: { errors, isSubmitting },
   } = useForm();
 
-  const onSubmit = (data) => {
-    setCaptainData({
+  const onSubmit = async (data) => {
+    setApiError(null);
+    setLoading(true);
+    const captainLoginData = {
       email: data.email,
       password: data.password,
-    });  
+    };
+    console.log("captainLoginData", captainLoginData);
 
     // Perform API call or authentication logic here
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/captain/login`,
+        captainLoginData,
+        { withCredentials: true }
+      );
+      console.log("what is coming in response>>>>>>>.", response);
+
+      if (response?.status === 200) {
+        const captainData = response.data;
+        setCaptain(captainData);
+        localStorage.setItem("CapToken", captainData.token);
+        navigate("/captain-home");
+      } else {
+        setApiError("Unexpected error. Please try again.");
+      }
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        "Something went wrong. Please try again.";
+      setApiError(errorMessage);
+      if (error?.response?.data?.errors) {
+        error.response.data.errors.forEach((err) => {
+          setError(err.field, { type: "manual", message: err.message });
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,12 +118,19 @@ const CaptainLogin = () => {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="flex items-center justify-center mt-4 bg-black text-white font-medium py-2 px-4 rounded-md shadow-md w-full h-12 transition disabled:opacity-50"
+                disabled={loading}
+                className={`flex items-center justify-center mt-4 bg-black text-white font-medium py-2 px-4 rounded-md shadow-md w-full h-12 transition disabled:opacity-50 ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                Captain Log In
+                {loading ? "Submitting..." : " Captain Log In "}
               </button>
             </form>
+            {apiError && (
+              <p className="text-red-600 text-center mb-4 mt-2 font-bold">
+                {apiError}
+              </p>
+            )}
 
             <p className="text-center text-gray-600 text-sm mt-4">
               join in OnTime?{" "}

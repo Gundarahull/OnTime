@@ -1,30 +1,132 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import { useGSAP } from "@gsap/react";
+import React, { useRef, useState } from "react";
+import gsap from "gsap";
+import { useEffect } from "react";
+import LocationSearchPanel from "../components/LocationSearchPanel";
+import VehicleRideList from "../components/VehicleRideList";
+import ConfirmRide from "../components/ConfirmRide";
+import WaitingForDriver from "../components/WaitingForDriver";
+import DriverDetails from "../components/DriverDetails";
 
 const Home = () => {
+  const [scrollUp, setScrollUp] = useState(false);
+  const [pickUp, setPickUp] = useState("");
+  const [destination, setDestination] = useState("");
+  const panelRef = useRef(null);
+  const scrollRef = useRef(null);
+  const [isVehiclePanel, setIsVehiclePanel] = useState(true);
+  const [vehicleConfirmation, setVehicleConfirmation] = useState(true);
+  const [rideConfirm, setRideConfirm] = useState(false);
+
+  const submitHandler = (e) => {
+    e.preventDefault();
+  };
   return (
     <>
-      <div className="bg-contain bg-no-repeat bg-center bg-[url(https://cdni.iconscout.com/illustration/premium/thumb/taxi-booking-offer-illustration-download-in-svg-png-gif-file-formats--cab-service-ride-hailing-pack-services-illustrations-10138608.png)] w-full  h-screen flex flex-col justify-between bg-orange-500">
-        <div className="w-full p-8 m-4">
-          <h2 className="w-[100] h-[100] font-bold text-3xl">OnTime</h2>
-          {/* <img
-            src="https://www.logo.wine/a/logo/Uber/Uber-Logo.wine.svg"
-            alt=""
-            srcset=""
-            width={100}
-            height={100}
-          /> */}
+      <div className="h-screen bg -white flex flex-col justify-between relative">
+        {/* //for temporary next we will search the image then https://miro.medium.com/v2/resize:fit:1400/0*gwMx05pqII5hbfmX.gif */}
+        <div className="w-full h-full bg-[url(https://gifdb.com/images/high/map-confused-moose-cartoon-looking-directions-p0pgcqtzs7h95e4q.webp)]  object-cover bg-no-repeat bg-center">
+          <h2 className="w-[100] h-[100] font-bold text-3xl m-8">OnTime</h2>
         </div>
-        <div className="bg-white h-32 flex flex-col  justify-center gap-2">
-          <h2 className="text-2xl font-extrabold relative bottom-0 text-center">
-            Get Started with OnTime
-          </h2>
-          <div className="flex items-center justify-center">
-            <Link to='/login' className="flex items-center justify-center mt-1 bg-black text-white font-medium py-2 px-4 rounded-md shadow-md w-[320px] h-12 mb-2">
-              Continue
-            </Link>
+        <div
+          className={`w-full bg-white flex flex-col justify-end absolute bottom-0 ${
+            scrollUp ? "h-screen" : "h-44"
+          } transition-height duration-500 ease-in-out `}
+        >
+          <div
+            className={`flex flex-col  ${
+              scrollUp ? "h-[30%]" : "h-full"
+            } p-4 relative transition-height`}
+          >
+            <div className="flex justify-between  ">
+              <h1 className="text-2xl font-semibold">Find Trip</h1>
+              <img
+                onClick={() => {
+                  setScrollUp(!scrollUp);
+                }}
+                src="public\arrow-down-double-line.png"
+                alt="arrow"
+                srcset=""
+              />
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                submitHandler(e);
+              }}
+            >
+              <div className="h-14 w-[3px] bg-black absolute left-[30px] top-[75px] rounded-xl"></div>
+              <input
+                type="text"
+                name=""
+                id=""
+                value={pickUp}
+                className="w-full bg-green-700 p-2 rounded-xl px-6 mt-4 placeholder:text-black text-xl"
+                onChange={(e) => {
+                  setPickUp(e.target.value);
+                }}
+                onClick={() => {
+                  setScrollUp(true);
+                }}
+                placeholder="Yekkada Unnav "
+              />
+              <input
+                type="text"
+                name=""
+                id=""
+                value={destination}
+                onChange={(e) => {
+                  setDestination(e.target.value);
+                }}
+                onClick={() => {
+                  setScrollUp(true);
+                }}
+                className="w-full bg-green-700 p-2 rounded-xl px-6 mt-2 mb-2 placeholder:text-black text-xl"
+                placeholder="Yekkadiki Vellali "
+              />
+            </form>
           </div>
+
+          {/* Bottom Div Section */}
+          {scrollUp && (
+            <div className="h-[70%] bg-white p-4 transition-height duration-500 ease-in-out">
+              <LocationSearchPanel
+                isVehiclePanel={isVehiclePanel}
+                setIsVehiclePanel={setIsVehiclePanel}
+                scrollUp={scrollUp}
+                setScrollUp={setScrollUp}
+              />
+            </div>
+          )}
         </div>
+
+        <VehicleRideList
+          setIsVehiclePanel={setIsVehiclePanel}
+          setVehicleConfirmation={setVehicleConfirmation}
+          vehicleConfirmation={vehicleConfirmation}
+          isVehiclePanel={isVehiclePanel}
+        />
+
+        <ConfirmRide
+          vehicleConfirmation={vehicleConfirmation}
+          setVehicleConfirmation={setVehicleConfirmation}
+          rideConfirm={rideConfirm}
+          setRideConfirm={setRideConfirm}
+        />
+
+        {rideConfirm && (
+          <WaitingForDriver
+            vehicleConfirmation={vehicleConfirmation}
+            setVehicleConfirmation={setVehicleConfirmation}
+            rideConfirm={rideConfirm}
+            setRideConfirm={setRideConfirm}
+          />
+        )}
+
+        {/* <DriverDetails
+          vehicleConfirmation={vehicleConfirmation}
+          setVehicleConfirmation={setVehicleConfirmation}
+        /> */}
       </div>
     </>
   );

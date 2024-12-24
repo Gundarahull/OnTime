@@ -1,21 +1,29 @@
-import React, { useState } from "react";
+import axios from "axios";
+import React, { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { UserDataContext } from "../context/UserContext";
+import { ToastContainer, toast, Bounce } from "react-toastify";
+
+import "react-toastify/dist/ReactToastify.css";
 
 const UserSignUp = () => {
-  const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
+  const { user, setUser } = useContext(UserDataContext);
+  const [apiError, setApiError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
   const {
     register,
     handleSubmit,
-    setError, // For manual error handling
-    formState: { errors, isSubmitting },
+    setError,
+    formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
-    setUserData({
-      email: data.email,
-      password: data.password,
-    });
+  const onSubmit = async (data) => {
+    setApiError(null);
+    setLoading(true);
+
     const signUpData = {
       fullName: {
         firstName: data.firstName,
@@ -24,11 +32,36 @@ const UserSignUp = () => {
       email: data.email,
       password: data.password,
     };
-    setUserData(signUpData);
 
-    // Perform API call or authentication logic here
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/users/register`,
+        signUpData
+      );
+
+      if (response?.status === 201) {
+        const userData = response.data;
+        setUser(userData);
+        navigate("/login");
+      } else {
+        setApiError("Unexpected error. Please try again.");
+      }
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        "Something went wrong. Please try again.";
+      setApiError(errorMessage);
+
+      // For specific form error handling
+      if (error?.response?.data?.errors) {
+        error.response.data.errors.forEach((err) => {
+          setError(err.field, { type: "manual", message: err.message });
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
-
   return (
     <>
       <div className="flex flex-col justify-between p-8 h-screen">
@@ -107,12 +140,17 @@ const UserSignUp = () => {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="flex items-center justify-center mt-4 bg-black text-white font-medium py-2 px-4 rounded-md shadow-md w-full h-12 transition disabled:opacity-50"
+                disabled={loading}
+                className={`flex items-center justify-center mt-4 bg-black text-white font-medium py-2 px-4 rounded-md shadow-md w-full h-12 transition disabled:opacity-50 ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                Sign Up
+                {loading ? "Submitting..." : "Create an Account"}
               </button>
             </form>
+            {apiError && (
+              <p className="text-black text-center mb-4 mt-2">{apiError}</p>
+            )}
 
             <p className="text-center text-gray-600 text-sm mt-4">
               Already have an account?{" "}
@@ -131,6 +169,5 @@ const UserSignUp = () => {
     </>
   );
 };
-
 
 export default UserSignUp;

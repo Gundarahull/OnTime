@@ -5,7 +5,13 @@ const cors = require("cors");
 const connectDB = require("./db/db");
 const cookieParser = require("cookie-parser");
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // frontend's URL
+    credentials: true,
+  })
+);
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
